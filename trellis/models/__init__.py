@@ -79,6 +79,7 @@ class HubMixin:
     def from_pretrained(
         cls,
         path: str,
+        ignore_mismatched_sizes: bool = False,
         **kwargs,
     ):
         is_local = Path(f"{path}.json").exists() and Path(f"{path}.safetensors").exists()
@@ -95,8 +96,23 @@ class HubMixin:
         with Path(config_file).open() as f:
             config = json.load(f)
 
-        model = cls(**config["args"], **kwargs)
-        model.load_state_dict(load_file(model_file))
+        merged_config = {**config["args"], **kwargs}
+        model = cls(**merged_config)
+        
+        state_dict = load_file(model_file)
+
+        if ignore_mismatched_sizes:
+            model_state = model.state_dict()
+            filtered_state_dict = {}
+            for k, v in state_dict.items():
+                if k in model_state and model_state[k].shape == v.shape:
+                    filtered_state_dict[k] = v
+                else:
+                    print(f"[ignore] {k}: checkpoint {tuple(v.shape)} != model {tuple(model_state.get(k, None).shape)}")
+            state_dict = filtered_state_dict
+
+        # 加载
+        model.load_state_dict(state_dict, strict=not ignore_mismatched_sizes)
 
         return model
 
