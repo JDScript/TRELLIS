@@ -2,10 +2,10 @@ from typing import *
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from . import HubMixin
 from ..modules.norm import GroupNorm32, ChannelLayerNorm32
 from ..modules.spatial import pixel_shuffle_3d
 from ..modules.utils import zero_module, convert_module_to_f16, convert_module_to_f32
-
 
 def norm_layer(norm_type: str, *args, **kwargs) -> nn.Module:
     """
@@ -98,7 +98,7 @@ class UpsampleBlock3d(nn.Module):
             return F.interpolate(x, scale_factor=2, mode="nearest")
         
 
-class SparseStructureEncoder(nn.Module):
+class SparseStructureEncoder(nn.Module, HubMixin):
     """
     Encoder for Sparse Structure (\mathcal{E}_S in the paper Sec. 3.3).
     
@@ -207,7 +207,7 @@ class SparseStructureEncoder(nn.Module):
         return z
         
 
-class SparseStructureDecoder(nn.Module):
+class SparseStructureDecoder(nn.Module, HubMixin):
     """
     Decoder for Sparse Structure (\mathcal{D}_S in the paper Sec. 3.3).
     

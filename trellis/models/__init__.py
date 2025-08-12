@@ -1,4 +1,9 @@
 import importlib
+import json
+from pathlib import Path
+
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
 
 __attributes = {
     'SparseStructureEncoder': 'sparse_structure_vae',
@@ -68,6 +73,32 @@ def from_pretrained(path: str, **kwargs):
     model.load_state_dict(load_file(model_file))
 
     return model
+
+class HubMixin:
+    @classmethod
+    def from_pretrained(
+        cls,
+        path: str,
+        **kwargs,
+    ):
+        is_local = Path(f"{path}.json").exists() and Path(f"{path}.safetensors").exists()
+        if is_local:
+            config_file = f"{path}.json"
+            model_file = f"{path}.safetensors"
+        else:
+            path_parts = path.split("/")
+            repo_id = f"{path_parts[0]}/{path_parts[1]}"
+            model_name = "/".join(path_parts[2:])
+            config_file = hf_hub_download(repo_id, f"{model_name}.json")
+            model_file = hf_hub_download(repo_id, f"{model_name}.safetensors")
+
+        with Path(config_file).open() as f:
+            config = json.load(f)
+
+        model = cls(**config["args"], **kwargs)
+        model.load_state_dict(load_file(model_file))
+
+        return model
 
 
 # For Pylance
