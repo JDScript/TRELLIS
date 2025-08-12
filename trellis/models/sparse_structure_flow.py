@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from . import HubMixin
 from ..modules.utils import convert_module_to_f16, convert_module_to_f32
 from ..modules.transformer import AbsolutePositionEmbedder, ModulatedTransformerCrossBlock
 from ..modules.spatial import patchify, unpatchify
@@ -52,7 +53,7 @@ class TimestepEmbedder(nn.Module):
         return t_emb
 
 
-class SparseStructureFlowModel(nn.Module):
+class SparseStructureFlowModel(nn.Module, HubMixin):
     def __init__(
         self,
         resolution: int,
